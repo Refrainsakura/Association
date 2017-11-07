@@ -1,11 +1,17 @@
 package association;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.Collator;
 import java.text.DateFormat;
 import java.util.*;
 import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Timer;
 
-public class UserScene {
+public class UserScene extends JFrame {
     private List<Activity> activities = new ArrayList<Activity>();
     private List<Association> associations = new ArrayList<>();
     private List<ManagerInfo> managerInfos = new ArrayList<>();
@@ -34,8 +40,19 @@ public class UserScene {
     private String[] member_num;
     private String[] activity_num;
     private Scanner reader;
+    private JPanel panel;
+    private JButton button_find;
+    private JLabel title_ass;
+    private JLabel title_act;
+    private JButton[] button_detail1;
+    private JButton[] button_detail2;
+    private JPanel[] panel_ass;
+    private JPanel[] panel_act;
+    private JPanel panel_title;
+    private JScrollPane jsp_main;
 
     public UserScene() {
+        ImageShow();
         this.ass = DataRead.CSVtoList("resource\\社团表.csv");//调动静态方法读取源数据
         this.mi = DataRead.CSVtoList("resource\\用户表.csv");
         this.ac = DataRead.CSVtoList("resource\\活动表.csv");
@@ -67,599 +84,461 @@ public class UserScene {
             this.activities.add(new Activity(acn.get(j - 1), act.get(j - 1), acl.get(j - 1), aas.get(j - 1), acs.get(j - 1), acr.get(j - 1)));
         }//将源数据通过循环给每个活动赋值
         this.reader = new Scanner(System.in);
-    }
 
-    public void Manager() {
-        ShowAll();
-    }
-
-    public void ShowAll() {
-        ImageShow();
-        System.out.println("请选择数字查看感兴趣的社团或活动");
-        System.out.println("请按下0进行搜索");
-        System.out.println("\n社团列表如下：");
-        for (int i = 0; i < associations.size(); i++) {
-            System.out.println((i + 1) + "-" + associations.get(i).getName());
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        System.out.println("\n活动列表如下：");
-        for (int i = 0; i < activities.size(); i++) {
-            System.out.println((i + 1 + associations.size()) + "-" + activities.get(i).getName());
-        }
-        switch (reader.nextInt()) {
-            case 0: {
+        setTitle("用户");
+        setSize(360, 300);
+        setLocationRelativeTo(null);
+        jsp_main = new JScrollPane();
+        title_ass = new JLabel("社团列表");
+        title_act = new JLabel("活动列表");
+        title_ass.setFont(new Font("宋体", Font.BOLD, 18));
+        title_act.setFont(new Font("宋体", Font.BOLD, 18));
+        title_ass.setVerticalAlignment(SwingConstants.CENTER);
+        title_ass.setHorizontalAlignment(SwingConstants.CENTER);
+        button_find = new JButton("查找");
+        button_find.setHorizontalAlignment(SwingConstants.RIGHT);
+        button_find.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 FindAll();
-                break;
             }
-            case 1: {
-                System.out.println(associations.get(0).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(0).getName() + "\n创建时间: " + associations.get(0).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(0).getManager_info().getName() + "\n院系: " + associations.get(0).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(0).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(0).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(0).getContact_way().getEmail() + "\n简介: " + associations.get(0).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(0).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
+        });
+        JTextField ass_name[] = new JTextField[associations.size()];
+        panel_ass = new JPanel[associations.size()];
+        button_detail1 = new JButton[associations.size()];
+        panel_title = new JPanel();
+        panel_title.setLayout(new GridLayout(1, 2));
+        panel_title.add(title_ass);
+        panel_title.add(button_find);
+        panel = new JPanel();
+        panel.add(panel_title);
+        for (int i = 0; i < associations.size(); i++) {
+            final int m = i;
+            ass_name[i] = new JTextField((i + 1) + "-" + associations.get(i).getName());
+            ass_name[i].setEditable(false);
+            ass_name[i].setFont(new Font("黑体", Font.PLAIN, 16));
+            button_detail1[i] = new JButton("查看详情");
+            panel_ass[i] = new JPanel();
+            panel_ass[i].setLayout(new GridLayout(1, 2));
+            panel_ass[i].add(ass_name[i]);
+            panel_ass[i].add(button_detail1[i]);
+            panel.add(panel_ass[i]);
+            button_detail1[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    AssDetail_Show(m);
                 }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                    case 2:
-                        FindbyName(acts[1]);
-                        break;
-                }
-                break;
-            }
-            case 2: {
-                System.out.println(associations.get(1).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(1).getName() + "\n创建时间: " + associations.get(1).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(1).getManager_info().getName() + "\n院系: " + associations.get(1).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(1).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(1).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(1).getContact_way().getEmail() + "\n简介: " + associations.get(1).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(1).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 3: {
-                System.out.println(associations.get(2).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(2).getName() + "\n创建时间: " + associations.get(2).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(2).getManager_info().getName() + "\n院系: " + associations.get(2).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(2).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(2).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(2).getContact_way().getEmail() + "\n简介: " + associations.get(2).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(2).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                    case 2:
-                        FindbyName(acts[1]);
-                        break;
-                }
-                break;
-            }
-            case 4: {
-                System.out.println(associations.get(3).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(3).getName() + "\n创建时间: " + associations.get(3).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(3).getManager_info().getName() + "\n院系: " + associations.get(3).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(3).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(3).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(3).getContact_way().getEmail() + "\n简介: " + associations.get(3).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(3).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 5: {
-                System.out.println(associations.get(4).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(4).getName() + "\n创建时间: " + associations.get(4).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(4).getManager_info().getName() + "\n院系: " + associations.get(4).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(4).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(4).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(4).getContact_way().getEmail() + "\n简介: " + associations.get(4).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(4).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 6: {
-                System.out.println(associations.get(5).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(5).getName() + "\n创建时间: " + associations.get(5).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(5).getManager_info().getName() + "\n院系: " + associations.get(5).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(5).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(5).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(5).getContact_way().getEmail() + "\n简介: " + associations.get(5).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(5).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 7: {
-                System.out.println(associations.get(6).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(6).getName() + "\n创建时间: " + associations.get(6).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(6).getManager_info().getName() + "\n院系: " + associations.get(6).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(6).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(6).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(6).getContact_way().getEmail() + "\n简介: " + associations.get(6).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(6).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 8: {
-                System.out.println(associations.get(7).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(7).getName() + "\n创建时间: " + associations.get(7).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(7).getManager_info().getName() + "\n院系: " + associations.get(7).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(7).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(7).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(7).getContact_way().getEmail() + "\n简介: " + associations.get(7).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(7).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 9: {
-                System.out.println(associations.get(8).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(8).getName() + "\n创建时间: " + associations.get(8).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(8).getManager_info().getName() + "\n院系: " + associations.get(8).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(8).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(8).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(8).getContact_way().getEmail() + "\n简介: " + associations.get(8).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(8).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                    case 2:
-                        FindbyName(acts[1]);
-                        break;
-                }
-                break;
-            }
-            case 10: {
-                System.out.println(associations.get(9).getName() + "的详情如下：");
-                System.out.println("社团名: " + associations.get(9).getName() + "\n创建时间: " + associations.get(9).getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + associations.get(9).getManager_info().getName() + "\n院系: " + associations.get(9).getManager_info().getCollege() +
-                        "\n班级: " + associations.get(9).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(9).getContact_way().getPhone_num() +
-                        "\n邮箱: " + associations.get(9).getContact_way().getEmail() + "\n简介: " + associations.get(9).getIntro() + "\n举办的活动:");
-                String[] acts = associations.get(9).getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-
-                }
-                System.out.println("请选择数字查看相关活动");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                    case 2:
-                        FindbyName(acts[1]);
-                        break;
-                }
-                break;
-            }
-            case 11: {
-                System.out.println(activities.get(0).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(0).getName() + "\n开始时间: " + activities.get(0).getHold_time() +
-                        "\n地点: " + activities.get(0).getLocation() +
-                        "\n简介: " + activities.get(0).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(0).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                    case 2:
-                        FindbyName(acts[1]);
-                        break;
-                }
-                break;
-            }
-            case 12: {
-                System.out.println(activities.get(1).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(1).getName() + "\n开始时间: " + activities.get(1).getHold_time() +
-                        "\n地点: " + activities.get(1).getLocation() +
-                        "\n简介: " + activities.get(1).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(1).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 13: {
-                System.out.println(activities.get(2).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(2).getName() + "\n开始时间: " + activities.get(2).getHold_time() +
-                        "\n地点: " + activities.get(2).getLocation() +
-                        "\n简介: " + activities.get(2).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(2).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 14: {
-                System.out.println(activities.get(3).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(3).getName() + "\n开始时间: " + activities.get(3).getHold_time() +
-                        "\n地点: " + activities.get(3).getLocation() +
-                        "\n简介: " + activities.get(3).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(3).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 15: {
-                System.out.println(activities.get(4).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(4).getName() + "\n开始时间: " + activities.get(4).getHold_time() +
-                        "\n地点: " + activities.get(4).getLocation() +
-                        "\n简介: " + activities.get(4).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(4).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 16: {
-                System.out.println(activities.get(5).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(5).getName() + "\n开始时间: " + activities.get(5).getHold_time() +
-                        "\n地点: " + activities.get(5).getLocation() +
-                        "\n简介: " + activities.get(5).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(5).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 17: {
-                System.out.println(activities.get(6).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(6).getName() + "\n开始时间: " + activities.get(6).getHold_time() +
-                        "\n地点: " + activities.get(6).getLocation() +
-                        "\n简介: " + activities.get(6).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(6).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 18: {
-                System.out.println(activities.get(7).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(7).getName() + "\n开始时间: " + activities.get(7).getHold_time() +
-                        "\n地点: " + activities.get(7).getLocation() +
-                        "\n简介: " + activities.get(7).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(7).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 19: {
-                System.out.println(activities.get(8).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(8).getName() + "\n开始时间: " + activities.get(8).getHold_time() +
-                        "\n地点: " + activities.get(8).getLocation() +
-                        "\n简介: " + activities.get(8).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(8).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                    case 2:
-                        FindbyName(acts[1]);
-                        break;
-                }
-                break;
-            }
-            case 20: {
-                System.out.println(activities.get(9).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(9).getName() + "\n开始时间: " + activities.get(9).getHold_time() +
-                        "\n地点: " + activities.get(9).getLocation() +
-                        "\n简介: " + activities.get(9).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(9).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 21: {
-                System.out.println(activities.get(10).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(10).getName() + "\n开始时间: " + activities.get(10).getHold_time() +
-                        "\n地点: " + activities.get(10).getLocation() +
-                        "\n简介: " + activities.get(10).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(10).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
-            case 22: {
-                System.out.println(activities.get(11).getName() + "的详情如下：");
-                System.out.println("活动名称: " + activities.get(11).getName() + "\n开始时间: " + activities.get(11).getHold_time() +
-                        "\n地点: " + activities.get(11).getLocation() +
-                        "\n简介: " + activities.get(11).getSlogan() + "\n主办社团:");
-                String[] acts = activities.get(11).getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
-                System.out.println("请选择数字查看相关社团");
-                switch (reader.nextInt()) {
-                    case 1:
-                        FindbyName(acts[0]);
-                        break;
-                }
-                break;
-            }
+            });
         }
-    }//展示详情
+        JTextField act_name[] = new JTextField[activities.size()];
+        panel_act = new JPanel[activities.size()];
+        button_detail2 = new JButton[activities.size()];
+        panel.add(title_act);
+        for (int j = 0; j < activities.size(); j++) {
+            final int n = j;
+            act_name[j] = new JTextField((j + 1) + "-" + activities.get(j).getName());
+            act_name[j].setEditable(false);
+            act_name[j].setFont(new Font("黑体", Font.PLAIN, 16));
+            button_detail2[j] = new JButton("查看详情");
+            panel_act[j] = new JPanel();
+            panel_act[j].setLayout(new GridLayout(1, 2));
+            panel_act[j].add(act_name[j]);
+            panel_act[j].add(button_detail2[j]);
+            panel.add(panel_act[j]);
+            button_detail2[j].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ActDetail_Show(n);
+                }
+            });
+        }
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        jsp_main.add(panel);
+        jsp_main.setViewportView(panel);
+        add(jsp_main);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
+
+    }
+
+    public void AssDetail_Show(int id) {
+        JFrame frame_assdetail = new JFrame("社团详情");
+        frame_assdetail.setSize(360, 400);
+        frame_assdetail.setLayout(new BorderLayout());
+        frame_assdetail.setLocationRelativeTo(null);
+        JPanel panel_assdetail = new JPanel();
+        JPanel panel_buts = new JPanel();
+        JLabel label_act = new JLabel("点击查看举办活动：");
+        JLabel title_assdetail = new JLabel(associations.get(id).getName() + "的详情为：");
+        title_assdetail.setHorizontalAlignment(SwingConstants.CENTER);
+        title_assdetail.setFont(new Font("宋体", Font.BOLD, 22));
+        JTextArea assdetail = new JTextArea("社团名: " + associations.get(id).getName() + "\n创建时间: " + associations.get(id).getEstablish_time() +
+                "\n负责人:" + "\n姓名: " + associations.get(id).getManager_info().getName() + "\n院系: " + associations.get(id).getManager_info().getCollege() +
+                "\n班级: " + associations.get(id).getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + associations.get(id).getContact_way().getPhone_num() +
+                "\n邮箱: " + associations.get(id).getContact_way().getEmail() + "\n简介: " + associations.get(id).getIntro() + "\n活动： " + associations.get(id).getActivities());
+        assdetail.setLineWrap(true);
+        assdetail.setWrapStyleWord(true);
+        assdetail.setEditable(false);
+        assdetail.setFont(new Font("黑体", Font.PLAIN, 20));
+        assdetail.setAlignmentY(0.5f);
+        String[] split = associations.get(id).getActivities().split("、");
+        JButton[] button_asso = new JButton[split.length];
+        panel_assdetail.setLayout(new BorderLayout());
+        panel_buts.setLayout(new FlowLayout());
+        panel_buts.add(label_act);
+        for (int i = 0; i < associations.get(id).getActivity_num(); i++) {
+            final int j = i;
+            button_asso[i] = new JButton(split[i]);
+            button_asso[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    FindbyName(split[j]);
+                }
+            });
+            panel_buts.add(button_asso[i]);
+        }
+        panel_assdetail.add(title_assdetail, BorderLayout.NORTH);
+        panel_assdetail.add(assdetail, BorderLayout.CENTER);
+        panel_assdetail.add(panel_buts, BorderLayout.SOUTH);
+        frame_assdetail.add(panel_assdetail);
+        frame_assdetail.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame_assdetail.setVisible(true);
+    }
+
+    public void ActDetail_Show(int id) {
+        JFrame frame_actdetail = new JFrame("活动详情");
+        frame_actdetail.setSize(360, 400);
+        frame_actdetail.setLayout(new BorderLayout());
+        frame_actdetail.setLocationRelativeTo(null);
+        JPanel panel_actdetail = new JPanel();
+        JPanel panel_buts = new JPanel();
+        JLabel label_ass = new JLabel("点击查看举办社团：");
+        JLabel title_actdetail = new JLabel(activities.get(id).getName() + "的详情为：");
+        title_actdetail.setHorizontalAlignment(SwingConstants.CENTER);
+        title_actdetail.setFont(new Font("宋体", Font.BOLD, 22));
+        JTextArea actdetail = new JTextArea("活动名称: " + activities.get(id).getName() + "\n开始时间: " + activities.get(id).getHold_time() +
+                "\n地点: " + activities.get(id).getLocation() +
+                "\n简介: " + activities.get(id).getSlogan());
+        actdetail.setLineWrap(true);
+        actdetail.setWrapStyleWord(true);
+        actdetail.setEditable(false);
+        actdetail.setFont(new Font("黑体", Font.PLAIN, 20));
+        actdetail.setAlignmentY(0.5f);
+        String[] split = activities.get(id).getAssociations().split("、");
+        JButton[] button_acts = new JButton[split.length];
+        panel_actdetail.setLayout(new BorderLayout());
+        panel_buts.setLayout(new FlowLayout());
+        panel_buts.add(label_ass);
+        for (int i = 0; i < split.length; i++) {
+            final int j = i;
+            button_acts[i] = new JButton(split[i]);
+            button_acts[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    FindbyName(split[j]);
+                }
+            });
+            panel_buts.add(button_acts[i]);
+        }
+        panel_actdetail.setLayout(new BorderLayout());
+        panel_actdetail.add(title_actdetail, BorderLayout.NORTH);
+        panel_actdetail.add(actdetail, BorderLayout.CENTER);
+        panel_actdetail.add(panel_buts, BorderLayout.SOUTH);
+        frame_actdetail.add(panel_actdetail);
+        frame_actdetail.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame_actdetail.setVisible(true);
+    }
 
     public void FindAll() {
-        System.out.println("请选择搜索方式:");
-        System.out.println("1-按社团名或活动名搜索");
-        System.out.println("2-按时间对活动进行筛选");
-        System.out.println("3-按社团对活动进行筛选");
-        switch (reader.nextInt()) {
-            case 1: {
-                System.out.println("请输入社团名或活动名:");
-                FindbyName(reader.next());
-                break;
+        JFrame frame_findall = new JFrame("查找");
+        frame_findall.setSize(360, 300);
+        frame_findall.setLocationRelativeTo(null);
+        JLabel title_find = new JLabel("选择使用功能");
+        JPanel panel_find = new JPanel();
+        JPanel panel_fbn = new JPanel();
+        JPanel panel_fbt = new JPanel();
+        JPanel panel_fba = new JPanel();
+        panel_find.setLayout(new GridLayout(4, 1));
+        title_find.setVerticalAlignment(SwingConstants.CENTER);
+        title_find.setHorizontalAlignment(SwingConstants.CENTER);
+        JLabel label_fbn = new JLabel("输入名称");
+        JLabel label_fbt = new JLabel("输入时间");
+        JLabel label_fba = new JLabel("输入社团");
+        JButton button_fbn = new JButton("查询");
+        JButton button_fbtb = new JButton("筛选之前");
+        JButton button_fbta = new JButton("筛选之后");
+        JButton button_fba = new JButton("筛选");
+        JTextField text_fbn = new JTextField(16);
+        JTextField text_fbt = new JTextField(16);
+        JTextField text_fba = new JTextField(16);
+        panel_fbn.setLayout(new FlowLayout());
+        panel_fbn.add(label_fbn);
+        panel_fbn.add(text_fbn);
+        panel_fbn.add(button_fbn);
+        panel_fbt.setLayout(new FlowLayout());
+        panel_fbt.add(label_fbt);
+        panel_fbt.add(text_fbt);
+        panel_fbt.add(button_fbtb);
+        panel_fbt.add(button_fbta);
+        panel_fba.setLayout(new FlowLayout());
+        panel_fba.add(label_fba);
+        panel_fba.add(text_fba);
+        panel_fba.add(button_fba);
+        button_fbn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FindbyName(text_fbn.getText().toString());
             }
-            case 2: {
-                FindActivitybyTime();
-                break;
+        });
+        button_fbtb.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FindActicitybyTimeBefore(text_fbt.getText().toString());
             }
-            case 3: {
-                System.out.println("请输入社团名:");
-                FindActivitybyAssociation(reader.next());
-                break;
+        });
+        button_fbta.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FindActicitybyTimeAfter(text_fbt.getText().toString());
             }
-        }
+        });
+        button_fba.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FindActivitybyAssociation(text_fba.getText().toString());
+            }
+        });
+        add(panel_find);
+        panel_find.add(title_find);
+        panel_find.add(panel_fbn);
+        panel_find.add(panel_fbt);
+        panel_find.add(panel_fba);
+        frame_findall.add(panel_find);
+        frame_findall.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame_findall.setVisible(true);
     }
 
     public void FindbyName(String name) {
         int count = 0;
-        for (Association a : associations) {
-            if (a.getName().equals(name)) {
-                System.out.println("找到相关社团");
-                System.out.println("社团名: " + a.getName() + "\n创建时间: " + a.getEstablish_time() +
-                        "\n负责人:" + "\n姓名: " + a.getManager_info().getName() + "\n院系: " + a.getManager_info().getCollege() +
-                        "\n班级: " + a.getManager_info().getClass_num() + "\n联系方式:" + "\n联系电话: " + a.getContact_way().getPhone_num() +
-                        "\n邮箱: " + a.getContact_way().getEmail() + "\n简介: " + a.getIntro() + "\n举办的活动:");
-                String[] acts = a.getActivities().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
+        for (int i = 0; i < associations.size(); i++) {
+            if (associations.get(i).getName().equals(name)) {
+                AssDetail_Show(i);
             } else count++;
         }
-        for (Activity a : activities) {
-            if (a.getName().equals(name)) {
-                System.out.println("找到相关活动");
-                System.out.println("活动名称: " + a.getName() + "\n开始时间: " + a.getHold_time() +
-                        "\n地点: " + a.getLocation() +
-                        "\n简介: " + a.getSlogan() + "\n主办社团:");
-                String[] acts = a.getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
+        for (int j = 0; j < activities.size(); j++) {
+            if (activities.get(j).getName().equals(name)) {
+                ActDetail_Show(j);
             } else count++;
         }
         if (count == activities.size() + associations.size()) {
-            System.out.println("没有找到相关内容，请重新输入");
-            FindbyName(reader.next());
-        }
-    }
+            JDialog dia_fbn = new JDialog();
+            dia_fbn.setLocationRelativeTo(null);
+            JLabel title_dia = new JLabel("没有找到,请重新输入");
+            title_dia.setHorizontalAlignment(SwingConstants.CENTER);
+            dia_fbn.setSize(200, 120);
+            dia_fbn.setVisible(true);
+            dia_fbn.getContentPane().add(title_dia);
 
-    public void FindActivitybyTime() {
-        System.out.println("请输入查询日期（格式：年.月.日）");
-        String date = reader.next();
-        System.out.println("请输入选择查询方式");
-        System.out.println("1-查询之前的活动");
-        System.out.println("2-查询之后的活动");
-        switch (reader.nextInt()) {
-            case 1:
-                FindActicitybyTimeBefore(date);
-                break;
-            case 2:
-                FindActicitybyTimeAfter(date);
-                break;
         }
     }
 
     public void FindActicitybyTimeBefore(String date) {
-        System.out.println("");
         int count = 0;
-        for (Activity a : activities) {
-            if (compare_date(date, a.getHold_time()) == 1) {
-                System.out.println("\n找到相关活动");
-                System.out.println("活动名称: " + a.getName() + "\n开始时间: " + a.getHold_time() +
-                        "\n地点: " + a.getLocation() +
-                        "\n简介: " + a.getSlogan() + "\n主办社团:");
-                String[] acts = a.getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
+        JFrame frame_fbtb = new JFrame();
+        frame_fbtb.setSize(360, 300);
+        frame_fbtb.setLocationRelativeTo(null);
+        JScrollPane jsp_fbtb = new JScrollPane();
+        JLabel title_actf = new JLabel("活动列表");
+        title_actf.setFont(new Font("宋体", Font.BOLD, 18));
+        title_actf.setHorizontalAlignment(SwingConstants.CENTER);
+        JTextField act_namef[] = new JTextField[activities.size()];
+        JPanel[] panel_actf = new JPanel[activities.size()];
+        JButton[] button_detailf = new JButton[activities.size()];
+        JPanel panelf = new JPanel();
+        panelf.add(title_actf);
+        for (int i = 0; i < activities.size(); i++) {
+            if (compare_date(date, activities.get(i).getHold_time()) == 1) {
+                final int m = i;
+                act_namef[i] = new JTextField(activities.get(i).getName());
+                act_namef[i].setEditable(false);
+                act_namef[i].setFont(new Font("黑体", Font.PLAIN, 16));
+                button_detailf[i] = new JButton("查看详情");
+                panel_actf[i] = new JPanel();
+                panel_actf[i].setLayout(new GridLayout(1, 2));
+                panel_actf[i].add(act_namef[i]);
+                panel_actf[i].add(button_detailf[i]);
+                panelf.add(panel_actf[i]);
+                button_detailf[i].addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        ActDetail_Show(m);
+                    }
+                });
             } else count++;
         }
+        panelf.setLayout(new BoxLayout(panelf, BoxLayout.Y_AXIS));
+        jsp_fbtb.add(panelf);
+        jsp_fbtb.setViewportView(panelf);
+        frame_fbtb.add(jsp_fbtb);
+        frame_fbtb.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame_fbtb.setVisible(true);
         if (count == activities.size()) {
-            System.out.println("没有找到相关内容，请重新输入");
-            FindActicitybyTimeBefore(reader.next());
+        	JDialog dia_fbn = new JDialog();
+            dia_fbn.setLocationRelativeTo(null);
+            JLabel title_dia = new JLabel("没有找到,请重新输入");
+            title_dia.setHorizontalAlignment(SwingConstants.CENTER);
+            dia_fbn.setSize(200, 120);
+            dia_fbn.setVisible(true);
+            dia_fbn.getContentPane().add(title_dia);
+
         }
     }
 
     public void FindActicitybyTimeAfter(String date) {
-        System.out.println("");
         int count = 0;
-        for (Activity a : activities) {
-            if (compare_date(date, a.getHold_time()) == -1) {
-                System.out.println("\n找到相关活动");
-                System.out.println("活动名称: " + a.getName() + "\n开始时间: " + a.getHold_time() +
-                        "\n地点: " + a.getLocation() +
-                        "\n简介: " + a.getSlogan() + "\n主办社团:");
-                String[] acts = a.getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
+        JFrame frame_fbta = new JFrame();
+        frame_fbta.setSize(360, 300);
+        frame_fbta.setLocationRelativeTo(null);
+        JScrollPane jsp_fbta = new JScrollPane();
+        JLabel title_actf = new JLabel("活动列表");
+        title_actf.setFont(new Font("宋体", Font.BOLD, 18));
+        title_actf.setHorizontalAlignment(SwingConstants.CENTER);
+        JTextField act_namef[] = new JTextField[activities.size()];
+        JPanel[] panel_actf = new JPanel[activities.size()];
+        JButton[] button_detailf = new JButton[activities.size()];
+        JPanel panelf = new JPanel();
+        panelf.add(title_actf);
+        for (int i = 0; i < activities.size(); i++) {
+            if (compare_date(date, activities.get(i).getHold_time()) == -1) {
+                final int m = i;
+                act_namef[i] = new JTextField(activities.get(i).getName());
+                act_namef[i].setEditable(false);
+                act_namef[i].setFont(new Font("黑体", Font.PLAIN, 16));
+                button_detailf[i] = new JButton("查看详情");
+                panel_actf[i] = new JPanel();
+                panel_actf[i].setLayout(new GridLayout(1, 2));
+                panel_actf[i].add(act_namef[i]);
+                panel_actf[i].add(button_detailf[i]);
+                panelf.add(panel_actf[i]);
+                button_detailf[i].addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        ActDetail_Show(m);
+                    }
+                });
             } else count++;
         }
+        panelf.setLayout(new BoxLayout(panelf, BoxLayout.Y_AXIS));
+        jsp_fbta.add(panelf);
+        jsp_fbta.setViewportView(panelf);
+        frame_fbta.add(jsp_fbta);
+        frame_fbta.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame_fbta.setVisible(true);
         if (count == activities.size()) {
-            System.out.println("没有找到相关内容，请重新输入");
-            FindActicitybyTimeAfter(reader.next());
+        	JDialog dia_fbn = new JDialog();
+            dia_fbn.setLocationRelativeTo(null);
+            JLabel title_dia = new JLabel("没有找到,请重新输入");
+            title_dia.setHorizontalAlignment(SwingConstants.CENTER);
+            dia_fbn.setSize(200, 120);
+            dia_fbn.setVisible(true);
+            dia_fbn.getContentPane().add(title_dia);
+
         }
     }
 
     public void FindActivitybyAssociation(String asname) {
         int count = 0;
-        for (Activity a : activities) {
-            if (a.getAssociations().indexOf(asname) != -1) {
-                System.out.println("\n找到相关活动");
-                System.out.println("活动名称: " + a.getName() + "\n开始时间: " + a.getHold_time() +
-                        "\n地点: " + a.getLocation() +
-                        "\n简介: " + a.getSlogan() + "\n主办社团:");
-                String[] acts = a.getAssociations().split("、");
-                for (int i = 0; i < acts.length; i++) {
-                    System.out.println(i + 1 + "-" + acts[i]);
-                }
+        JFrame frame_fba = new JFrame();
+        frame_fba.setSize(360, 200);
+        frame_fba.setLocationRelativeTo(null);
+        JScrollPane jsp_fba = new JScrollPane();
+        JLabel title_actf = new JLabel("活动列表");
+        title_actf.setFont(new Font("宋体", Font.BOLD, 18));
+        title_actf.setHorizontalAlignment(SwingConstants.CENTER);
+        JTextField act_namef[] = new JTextField[activities.size()];
+        JPanel[] panel_actf = new JPanel[activities.size()];
+        JButton[] button_detailf = new JButton[activities.size()];
+        JPanel panelf = new JPanel();
+        panelf.add(title_actf);
+        for (int i = 0; i < activities.size(); i++) {
+            if (activities.get(i).getAssociations().indexOf(asname) != -1) {
+                final int m = i;
+                act_namef[i] = new JTextField(activities.get(i).getName());
+                act_namef[i].setEditable(false);
+                act_namef[i].setFont(new Font("黑体", Font.PLAIN, 16));
+                button_detailf[i] = new JButton("查看详情");
+                panel_actf[i] = new JPanel();
+                panel_actf[i].setLayout(new GridLayout(1, 2));
+                panel_actf[i].add(act_namef[i]);
+                panel_actf[i].add(button_detailf[i]);
+                panelf.add(panel_actf[i]);
+                button_detailf[i].addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        ActDetail_Show(m);
+                    }
+                });
             } else count++;
         }
+        panelf.setLayout(new BoxLayout(panelf, BoxLayout.Y_AXIS));
+        jsp_fba.add(panelf);
+        jsp_fba.setViewportView(panelf);
+        frame_fba.add(jsp_fba);
+        frame_fba.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame_fba.setVisible(true);
         if (count == activities.size()) {
-            System.out.println("没有找到相关内容，请重新输入");
-            FindActivitybyAssociation(reader.next());
+        	JDialog dia_fbn = new JDialog();
+            dia_fbn.setLocationRelativeTo(null);
+            JLabel title_dia = new JLabel("没有找到,请重新输入");
+            title_dia.setHorizontalAlignment(SwingConstants.CENTER);
+            dia_fbn.setSize(200, 120);
+            dia_fbn.setVisible(true);
+            dia_fbn.getContentPane().add(title_dia);
+
         }
     }
 
     public void ImageShow() {
         int delay = 1000;
         Timer start_timer = new Timer();
-        Comparator sort= Collator.getInstance(java.util.Locale.CHINA);
-        Collections.sort(an,sort);
+        Comparator sort = Collator.getInstance(java.util.Locale.CHINA);
+        Collections.sort(an, sort);
         TimerTask start_task = new TimerTask() {
             @Override
             public void run() {
-                System.out.println("\n进入展示模式");
-                for(int i=0;i<associations.size();i++){
+                JFrame frame_show = new JFrame("图片展示");
+                frame_show.setSize(360, 200);
+                frame_show.setLocationRelativeTo(null);
+                JPanel panel_show = new JPanel();
+                panel_show.setLayout(new BoxLayout(panel_show,BoxLayout.Y_AXIS));
+                JTextField text_show1 = new JTextField("HEI");
+                JTextField text_show2 = new JTextField();
+                for (int i = 0; i < associations.size(); i++) {
                     int num1 = new Random().nextInt(10) + 1;
                     int num2 = new Random().nextInt(10) + 1;
-                    System.out.println("展示"+an.get(i)+"的第"+num1+"张图片");
-                    System.out.println("展示"+an.get(i)+"的第"+num2+"张图片");
-                    try{
-                        Thread.sleep(5*delay);//delay=1s
-                    }catch(InterruptedException e){
+                    text_show1.setText("展示" + an.get(i) + "的第" + num1 + "张图片");
+                    text_show2.setText("展示" + an.get(i) + "的第" + num2 + "张图片");
+                    try {
+                        Thread.sleep(5 * delay);//delay=1s
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
+                panel_show.add(text_show1);
+                panel_show.add(text_show2);
+                frame_show.add(panel_show);
+                frame_show.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+                frame_show.setVisible(true);
             }
         };
-        start_timer.schedule(start_task,60*delay);
+        start_timer.schedule(start_task, 60 * delay);
     }
+
 
     public static int compare_date(String DATE1, String DATE2) {
         DateFormat df = new SimpleDateFormat("yyyy.MM.dd");//静态方法传参并比较日期
@@ -674,7 +553,14 @@ public class UserScene {
                 return 0;
             }
         } catch (Exception exception) {
-            exception.printStackTrace();
+            JDialog dia_fbn = new JDialog();
+            dia_fbn.setLocationRelativeTo(null);
+            JLabel title_dia = new JLabel("输入不合法，请重新输入");
+            title_dia.setHorizontalAlignment(SwingConstants.CENTER);
+            dia_fbn.setSize(200, 120);
+            dia_fbn.setVisible(true);
+            dia_fbn.getContentPane().add(title_dia);
+            dia_fbn.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         }
         return 0;
     }
